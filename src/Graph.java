@@ -24,14 +24,10 @@ public class Graph {
 	        long currVal = currKey > 1 ? currSum - (2 * n - (currKey - 1) - 1) * (currKey - 1) / 2 + currKey : 1 + currSum;
 	        
 	        if (!map.containsKey(currKey)) map.put(currKey, new HashSet<>());
-	        Set<Long> currKeyNeighbors = map.get(currKey);
-	        currKeyNeighbors.add(currVal);
-	        map.put(currKey, currKeyNeighbors);
+	        map.get(currKey).add(currVal);
 	        
 	        if (!map.containsKey(currVal)) map.put(currVal, new HashSet<>());
-	        Set<Long> currValNeighbors = map.get(currVal);
-	        currValNeighbors.add(currKey);
-	        map.put(currVal, currValNeighbors);
+	        map.get(currVal).add(currKey);
 	    }
 	}
 	
@@ -71,9 +67,26 @@ public class Graph {
 		}
 		
 		int currDegreeSum = m0 * (m0 - 1);
+		long currNodeCount = m0;
 		
 		for (long i = m0 + 1; i <= n; i++) {
+			double[] probs = new double[(int) currNodeCount];
+			probs[0] = (double) getDegree(1) / currDegreeSum;
+			for (int j = 1; j < currNodeCount; j++) probs[j] = probs[j - 1] + (double) getDegree(j + 1) / currDegreeSum;
 			
+			map.put(++currNodeCount, new HashSet<>());
+			
+			for (int k = 1; k <= m; k++) {
+				double rand = Math.random();
+				
+				for (long j = 0; j < probs.length; j++) {
+					if (rand < probs[(int) j]) {
+						if (map.get(j + 1).add(currNodeCount)) currDegreeSum++;
+						if (map.get(currNodeCount).add((long) j + 1)) currDegreeSum++;
+						break;
+					}
+				}
+			}
 		}
 	}
 	
@@ -105,8 +118,8 @@ public class Graph {
 			if (!visited.contains(i)) {
 				Set<Long> currVisited = new HashSet<>();
 				Queue<Long> queue = new LinkedList<>();
-				
 				queue.add(i);
+				
 				while (!queue.isEmpty()) {
 					long currNode = queue.remove();
 					visited.add(currNode);
@@ -154,7 +167,7 @@ public class Graph {
 	
 	public int[] getDegrees() {
 		int[] degrees = new int[(int) numberOfNodes];
-		for (long i = 0; i < numberOfNodes; i++) degrees[(int) i] = map.get(i).size();
+		for (long i = 0; i < numberOfNodes; i++) degrees[(int) i] = map.get(i + 1).size();
 		return degrees;
 	}
 	

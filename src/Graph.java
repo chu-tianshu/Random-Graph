@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Random;
 import java.util.Set;
 
 public class Graph {
@@ -84,6 +85,69 @@ public class Graph {
 						if (map.get(j + 1).add(currNodeCount)) currDegreeSum++;
 						if (map.get(currNodeCount).add((long) j + 1)) currDegreeSum++;
 						break;
+					}
+				}
+			}
+		}
+	}
+	
+	public Graph(int n, int m0, int m, double q) { // Extended BA model
+		map = new HashMap<>();
+		numberOfNodes = n;
+		
+		for (long i = 1; i <= m0; i++) {
+			Set<Long> currNeighbors = new HashSet<>();
+			for (long j = 1; j <= m0; j++)
+				if (i != j) currNeighbors.add(j);
+			
+			map.put(i, currNeighbors);
+		}
+		
+		int currDegreeSum = m0 * (m0 - 1);
+		long currNodeCount = m0;
+		
+		while (currNodeCount < n) {
+			double[] probs = new double[(int) currNodeCount];
+			probs[0] = (double) getDegree(1) / currDegreeSum;
+			for (int j = 1; j < currNodeCount - 1; j++) probs[j] = probs[j - 1] + (double) getDegree(j + 1) / currDegreeSum;
+			probs[(int) currNodeCount - 1] = 1;
+			
+			if (Math.random() < q) {
+				map.put(++currNodeCount, new HashSet<>());
+				
+				for (int k = 1; k <= m; k++) {
+					double rand = Math.random();
+					
+					for (long j = 0; j < probs.length; j++) {
+						if (rand <= probs[(int) j]) {
+							if (map.get(j + 1).add(currNodeCount)) currDegreeSum++;
+							if (map.get(currNodeCount).add(j + 1)) currDegreeSum++;
+							break;
+						}
+					}
+				}				
+			} else {
+				for (int k = 1; k <= m; k++) {
+					Random random = new Random();
+					
+					long node = random.nextInt((int) currNodeCount) + 1;
+					long neighbor = -1;
+					int rand = random.nextInt(getDegree(node));
+					int i = 0;
+					for (Long currNeighbor : getNeighbors(node)) {
+						if (rand == i++) {
+							neighbor = currNeighbor;
+							break;
+						}
+					}
+					
+					for (Long currNeighbor : getNeighbors(neighbor)) {
+						if (!getNeighbors(node).contains(currNeighbor)) {
+							map.get(node).add(currNeighbor);
+							map.get(currNeighbor).add(node);
+							currDegreeSum += 2;
+							break;
+						}
 					}
 				}
 			}
@@ -260,6 +324,10 @@ public class Graph {
 	
 	public long getNodeCount() {
 		return numberOfNodes;
+	}
+	
+	public Set<Long> getNeighbors(long node) {
+		return map.get(node);
 	}
 	
 	public int getDegree(long node) {
